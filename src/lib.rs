@@ -2,6 +2,8 @@
 #![feature(trait_alias)]
 #![feature(type_alias_impl_trait)]
 #![feature(box_syntax)]
+#![feature(const_fn_trait_bound)]
+#![feature(const_trait_impl)]
 
 trait Class {}
 
@@ -11,6 +13,11 @@ trait Morphism {
     type Domain;
     type Codomain;
     fn call(self, arg: Self::Domain) -> Self::Codomain;
+}
+
+trait Endomorphism: Morphism<Codomain = <Self as Morphism>::Domain> {
+    type Identity: Endomorphism;
+    const IDENTITY: Self::Identity;
 }
 
 trait HomClass: Class {
@@ -42,7 +49,7 @@ impl<F, I, O> Function<F, I, O>
 where
     F: FnOnce(I) -> O,
 {
-    pub fn new(f: F) -> Self {
+    pub const fn new(f: F) -> Self {
         Function {
             f,
             in_phantom: std::marker::PhantomData,
@@ -70,6 +77,18 @@ where
         let function = self.f;
         function(arg)
     }
+}
+
+fn id<X>(x: X) -> X {
+    x
+}
+
+impl<F, I> Endomorphism for Function<F, I, I>
+where
+    F: FnOnce(I) -> I,
+{
+    type Identity = Function<fn(I) -> I, I, I>;
+    const IDENTITY: Self::Identity = Function::new(id);
 }
 
 impl<F, I, O> HomClassMember<RustFunctions> for Function<F, I, O> where F: FnOnce(I) -> O {}
@@ -107,23 +126,36 @@ where
 }
 
 trait Category {
+    // class of objects
     type Objects: Class;
+
+    // morphism class between objects
     type Morphisms: HomClass<Domains = Self::Objects>;
-    // type HomClass<I: ClassMember<Self::Objects>, O: ClassMember<Self::Objects>>: HomClass<I, O>;
-    // 任意のClassMember<RustFunction>を実装してる構造体が、射であることを誓約として与えてる
-    // そのために、IからOへの射の類 HomClass<I, O>の制約に、ObjectのClassMemberである制約をつけている
+
+    // composition of morphism
     type Composer<L: HomClassMember<Self::Morphisms>, R: HomClassMember<Self::Morphisms> + Morphism<Codomain = <L as Morphism>::Domain>>: Composition<L, R>;
+
+    // category must have identity morphism
+    type Identity<Item>: HomClassMember<Self::Morphisms> + Morphism<Domain = Item, Codomain = Item>;
+
+    fn identity<Item>() -> Self::Identity<Item>;
 }
 
 pub struct RustCategory {}
 
-impl Category for RustCategory {
+impl const Category for RustCategory {
     type Objects = RustStructs;
     type Morphisms = RustFunctions;
     type Composer<
         L: HomClassMember<Self::Morphisms>,
         R: HomClassMember<Self::Morphisms> + Morphism<Codomain = <L as Morphism>::Domain>,
     > = ArrayComposition;
+
+    type Identity<Item> = Function<fn(Item) -> Item, Item, Item>;
+
+    fn identity<Item>() -> Self::Identity<Item> {
+        <Self as Category>::Identity::<Item>::IDENTITY
+    }
 }
 
 trait Ob<Cat: Category> = ClassMember<<Cat as Category>::Objects>;
