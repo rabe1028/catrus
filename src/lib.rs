@@ -15,6 +15,9 @@ trait Morphism {
     fn call(self, arg: Self::Domain) -> Self::Codomain;
 }
 
+type Domain<F> = <F as Morphism>::Domain;
+type Codomain<F> = <F as Morphism>::Codomain;
+
 trait Endomorphism: Morphism<Codomain = <Self as Morphism>::Domain> {
     type Identity: Endomorphism;
     const IDENTITY: Self::Identity;
@@ -136,7 +139,7 @@ trait Category {
     type Composer<L: HomClassMember<Self::Morphisms>, R: HomClassMember<Self::Morphisms> + Morphism<Codomain = <L as Morphism>::Domain>>: Composition<L, R>;
 
     // category must have identity morphism
-    type Identity<Item>: HomClassMember<Self::Morphisms> + Morphism<Domain = Item, Codomain = Item>;
+    type Identity<Item>: HomClassMember<Self::Morphisms> + Endomorphism;
 
     fn identity<Item>() -> Self::Identity<Item>;
 }
@@ -159,16 +162,36 @@ impl const Category for RustCategory {
 }
 
 trait Ob<Cat: Category> = ClassMember<<Cat as Category>::Objects>;
+trait Hom<Cat: Category> = HomClassMember<<Cat as Category>::Morphisms>;
 
 trait Functor {
     type Source: Category;
     type Target: Category;
-    type Map<A>;
+    type Map<A>: Ob<Self::Target>
+    where
+        A: Ob<Self::Source>;
+
+    // type FMap<A, B>: Hom<Self::Target>
+    // where
+    //     A: Ob<Self::Source>,
+    //     B: Ob<Self::Source>;
+    type FMap<F>: Hom<Self::Target>
+    where
+        F: Hom<Self::Source>;
 
     fn map<A>(a: A) -> Self::Map<A>
     where
         A: Ob<Self::Source>,
         Self::Map<A>: Ob<Self::Target>;
+    // fn fmap<A, B>(
+    //     f: impl Hom<Self::Source> + Morphism<Domain = A, Codomain = B>,
+    // ) -> Self::FMap<A, B>
+    // where
+    //     A: Ob<Self::Source>,
+    //     B: Ob<Self::Source>;
+    fn fmap<F>(f: F) -> Self::FMap<F>
+    where
+        F: Hom<Self::Source>;
 }
 
 struct OptionFunctor {}
@@ -177,11 +200,37 @@ impl Functor for OptionFunctor {
     type Source = RustCategory;
     type Target = RustCategory;
     type Map<A> = Option<A>;
+    // type FMap<A, B> = Function<impl FnOnce(Option<A>) -> Option<B>, Option<A>, Option<B>>;
+    type FMap<F: Hom<RustCategory>> = Function<
+        impl FnOnce(Option<Domain<F>>) -> Option<Codomain<F>>,
+        Option<Domain<F>>,
+        Option<Codomain<F>>,
+    >;
+
     fn map<A>(a: A) -> Option<A>
     where
         A: Ob<Self::Source>,
     {
         Some(a)
+    }
+    // fn fmap<A, B>(
+    //     f: impl Hom<Self::Source> + Morphism<Domain = A, Codomain = B>,
+    // ) -> Self::FMap<A, B>
+    // where
+    //     A: Ob<Self::Source>,
+    //     B: Ob<Self::Source>,
+    // {
+    //     let f = move |arg: Option<A>| -> Option<B> { arg.map(|a| Morphism::call(f, a)) };
+    //     Function::new(f)
+    // }
+    fn fmap<F>(f: F) -> Self::FMap<F>
+    where
+        F: Hom<RustCategory>,
+    {
+        let f = move |arg: Option<Domain<F>>| -> Option<Codomain<F>> {
+            arg.map(|a| Morphism::call(f, a))
+        };
+        Function::new(f)
     }
 }
 
