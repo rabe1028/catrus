@@ -14,11 +14,11 @@ impl HomClass for RustFunctions {
 }
 
 impl<F, I, O> ClassMember<RustFunctions> for Function<F, I, O> where F: FnOnce(I) -> O {}
-impl<F, I, O> HomClassMember<RustFunctions> for Function<F, I, O> 
-where F: FnOnce(I) -> O,
-    // I: ClassMember<RustStructs>,
-    // O: ClassMember<RustStructs>
-{}
+impl<F, I, O> HomClassMember<RustFunctions> for Function<F, I, O> where
+    F: FnOnce(I) -> O // I: ClassMember<RustStructs>,
+                      // O: ClassMember<RustStructs>
+{
+}
 
 pub struct ArrayComposition {}
 
@@ -27,8 +27,8 @@ where
     L: HomClassMember<RustFunctions> + Morphism<Domain = <R as Morphism>::Codomain>,
     R: HomClassMember<RustFunctions>,
 {
-    type Output = impl HomClassMember<RustFunctions>
-        + Morphism<Domain = <R as Morphism>::Domain, Codomain = <L as Morphism>::Codomain>;
+    type Output =
+        impl HomClassMember<RustFunctions> + Morphism<Domain = Domain<R>, Codomain = Codomain<L>>;
     fn compose(lhs: L, rhs: R) -> Self::Output {
         let f = move |arg| lhs.call(rhs.call(arg));
         Function::new(f)

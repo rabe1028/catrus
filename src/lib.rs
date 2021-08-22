@@ -1,7 +1,6 @@
 #![feature(generic_associated_types)]
 #![feature(trait_alias)]
 #![feature(type_alias_impl_trait)]
-#![feature(box_syntax)]
 #![feature(const_fn_trait_bound)]
 #![feature(const_trait_impl)]
 // #![recursion_limit = "1024"]

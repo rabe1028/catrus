@@ -20,11 +20,11 @@ pub trait HomClass: Class {
     type Domains: Class;
 }
 
-pub trait HomClassMember<Homs: HomClass>: Morphism 
-// where
-//     Domain<Self>: ClassMember<<Homs as HomClass>::Domains>,
-//     Codomain<Self>: ClassMember<<Homs as HomClass>::Domains>
-{}
+pub trait HomClassMember<Homs: HomClass>: Morphism
+// Domain<Self>: ClassMember<<Homs as HomClass>::Domains>,
+// Codomain<Self>: ClassMember<<Homs as HomClass>::Domains>
+{
+}
 
 pub trait Composition<Lhs: Morphism, Rhs: Morphism> {
     type Output: Morphism;
@@ -43,18 +43,14 @@ pub trait Category {
 
     // category must have identity morphism
     type Identity<Item>: HomClassMember<Self::Morphisms> + Endomorphism;
-    // where Domain<Self::Identity<Item>>: ClassMember<Self::Objects>;
 
-    fn identity<Item>() -> Self::Identity<Item> where Domain<Self::Identity<Item>>: ClassMember<Self::Objects>;
+    fn identity<Item>() -> Self::Identity<Item>
+    where
+        Domain<Self::Identity<Item>>: ClassMember<Self::Objects>;
 }
 
 pub trait Ob<Cat: Category> = ClassMember<<Cat as Category>::Objects>;
-pub trait Hom<Cat: Category> = 
-where
-    Self: HomClassMember<<Cat as Category>::Morphisms>,
-    // Domain<Self>: Ob<Cat>,
-    // Codomain<Self>: Ob<Cat>
-;
+pub trait Hom<Cat: Category> = where Self: HomClassMember<<Cat as Category>::Morphisms>;
 
 pub trait CovariantFunctor {
     type Source: Category;
@@ -63,11 +59,10 @@ pub trait CovariantFunctor {
     where
         A: Ob<Self::Source>;
 
-    type FMap<F>: // Hom<Self::Target>
+    type FMap<F>
+    : // Hom<Self::Target>
     where
-        F: Hom<Self::Source>,
-        // Self::FMap<F>: Hom<Self::Target>,
-        ;
+        F: Hom<Self::Source>;
 
     fn map<A>(a: A) -> Self::Map<A>
     where
@@ -76,9 +71,9 @@ pub trait CovariantFunctor {
 
     fn fmap<F>(f: F) -> Self::FMap<F>
     where
-        F: Hom<Self::Source>,
+        F: Hom<Self::Source>
         // Self::FMap<F>: Hom<Self::Target>
-        ;
+    ;
 }
 
-pub trait EndoFunctor: CovariantFunctor<Source=<Self as CovariantFunctor>::Target> {}
+pub trait EndoFunctor: CovariantFunctor<Source = <Self as CovariantFunctor>::Target> {}
