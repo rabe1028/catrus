@@ -63,4 +63,18 @@ mod tests {
         // let c = <<RustCategory as Category>::Composer<_, _> as Composition<_, _>>::compose(a, b);
         let _ = ArrayComposition::compose(a, b);
     }
+
+    #[test]
+    fn test_identity() {
+        let a = 1;
+        let func = RustCategory::identity();
+        assert_eq!(a, func.call(a))
+    }
+
+    #[test]
+    fn test_const_identity() {
+        const FUNC: Function<fn(i32) -> i32, i32, i32> = RustCategory::identity();
+        const A: i32 = 1;
+        assert_eq!(A, FUNC.call(A))
+    }
 }
