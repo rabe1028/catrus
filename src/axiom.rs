@@ -49,8 +49,19 @@ pub trait Category {
         Domain<Self::Identity<Item>>: ClassMember<Self::Objects>;
 }
 
-pub trait Ob<Cat: Category> = ClassMember<<Cat as Category>::Objects>;
-pub trait Hom<Cat: Category> = where Self: HomClassMember<<Cat as Category>::Morphisms>;
+pub trait Ob<Cat: Category> : ClassMember<<Cat as Category>::Objects> {}
+impl <A, Cat> Ob<Cat> for A
+where
+    A: ClassMember<<Cat as Category>::Objects>,
+    Cat: Category,
+    {}
+
+pub trait Hom<Cat: Category>: HomClassMember<<Cat as Category>::Morphisms> {}
+impl <A, Cat> Hom<Cat> for A
+where
+    A: HomClassMember<<Cat as Category>::Morphisms>,
+    Cat: Category,
+    {}
 
 pub trait CovariantFunctor {
     type Source: Category;

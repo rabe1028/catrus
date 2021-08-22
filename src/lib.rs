@@ -1,5 +1,4 @@
 #![feature(generic_associated_types)]
-#![feature(trait_alias)]
 #![feature(type_alias_impl_trait)]
 #![feature(const_fn_trait_bound)]
 #![feature(const_trait_impl)]
