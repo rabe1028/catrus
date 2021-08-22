@@ -4,6 +4,7 @@
 #![feature(box_syntax)]
 #![feature(const_fn_trait_bound)]
 #![feature(const_trait_impl)]
+// #![recursion_limit = "1024"]
 
 pub mod axiom;
 use axiom::*;
@@ -16,7 +17,7 @@ use rust_category::*;
 
 struct OptionFunctor {}
 
-impl Functor for OptionFunctor {
+impl CovariantFunctor for OptionFunctor {
     type Source = RustCategory;
     type Target = RustCategory;
 
@@ -37,23 +38,11 @@ impl Functor for OptionFunctor {
     fn fmap<F>(f: F) -> Self::FMap<F>
     where
         F: Hom<RustCategory>,
+        Self::FMap<F>: Hom<RustCategory>,
     {
         let f = move |arg: Option<Domain<F>>| -> Option<Codomain<F>> {
             arg.map(|a| Morphism::call(f, a))
         };
         Function::new(f)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::*;
-
-    #[test]
-    fn test_closure_compose() {
-        let a = Function::new(|x: usize| x + 1);
-        let b = Function::new(|x: usize| x * x);
-        // let c = <<RustCategory as Category>::Composer<_, _> as Composition<_, _>>::compose(a, b);
-        let _ = ArrayComposition::compose(a, b);
     }
 }

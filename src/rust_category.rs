@@ -14,7 +14,11 @@ impl HomClass for RustFunctions {
 }
 
 impl<F, I, O> ClassMember<RustFunctions> for Function<F, I, O> where F: FnOnce(I) -> O {}
-impl<F, I, O> HomClassMember<RustFunctions> for Function<F, I, O> where F: FnOnce(I) -> O {}
+impl<F, I, O> HomClassMember<RustFunctions> for Function<F, I, O> 
+where F: FnOnce(I) -> O,
+    // I: ClassMember<RustStructs>,
+    // O: ClassMember<RustStructs>
+{}
 
 pub struct ArrayComposition {}
 
