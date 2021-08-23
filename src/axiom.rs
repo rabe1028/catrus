@@ -21,10 +21,22 @@ pub trait HomClass: Class {
 }
 
 pub trait HomClassMember<Homs: HomClass>: Morphism
-// Domain<Self>: ClassMember<<Homs as HomClass>::Domains>,
-// Codomain<Self>: ClassMember<<Homs as HomClass>::Domains>
+where
+    Self: Morphism<Domain = <Self as HomClassMember<Homs>>::Domain, Codomain=<Self as HomClassMember<Homs>>::Codomain>,
+    Domain<Self>: ClassMember<<Homs as HomClass>::Domains>,
+    Codomain<Self>: ClassMember<<Homs as HomClass>::Domains>
 {
+    type Domain: ClassMember<<Homs as HomClass>::Domains>;
+    type Codomain: ClassMember<<Homs as HomClass>::Domains>;
 }
+
+pub type Dom<F, Homs> = <F as HomClassMember<Homs>>::Domain;
+pub type Cod<F, Homs> = <F as HomClassMember<Homs>>::Codomain;
+
+pub trait EndomorphHomClassMember<Homs: HomClass>: Endomorphism
+where
+    Self: HomClassMember<Homs, Codomain = <Self as HomClassMember<Homs>>::Domain>
+{}
 
 pub trait Composition<Lhs: Morphism, Rhs: Morphism> {
     type Output: Morphism;
@@ -39,10 +51,10 @@ pub trait Category {
     type Morphisms: HomClass<Domains = Self::Objects>;
 
     // composition of morphism
-    type Composer<L: HomClassMember<Self::Morphisms>, R: HomClassMember<Self::Morphisms> + Morphism<Codomain = <L as Morphism>::Domain>>: Composition<L, R>;
+    type Composer<L: HomClassMember<Self::Morphisms>, R: HomClassMember<Self::Morphisms, Codomain = <L as HomClassMember<Self::Morphisms>>::Domain>>: Composition<L, R>;
 
     // category must have identity morphism
-    type Identity<Item>: HomClassMember<Self::Morphisms> + Endomorphism;
+    type Identity<Item>: EndomorphHomClassMember<Self::Morphisms>;
 
     fn identity<Item>() -> Self::Identity<Item>
     where
@@ -82,8 +94,8 @@ pub trait CovariantFunctor {
 
     fn fmap<F>(f: F) -> Self::FMap<F>
     where
-        F: Hom<Self::Source>
-        // Self::FMap<F>: Hom<Self::Target>
+        F: Hom<Self::Source>,
+        Self::FMap<F>: Hom<Self::Target>
     ;
 }
 

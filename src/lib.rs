@@ -2,6 +2,7 @@
 #![feature(type_alias_impl_trait)]
 #![feature(const_fn_trait_bound)]
 #![feature(const_trait_impl)]
+#![feature(associated_type_defaults)]
 // #![recursion_limit = "1024"]
 
 pub mod axiom;
@@ -20,10 +21,13 @@ impl CovariantFunctor for OptionFunctor {
     type Target = RustCategory;
 
     type Map<A> = Option<A>;
-    type FMap<F: Hom<RustCategory>> = Function<
-        impl FnOnce(Option<Domain<F>>) -> Option<Codomain<F>>,
-        Option<Domain<F>>,
-        Option<Codomain<F>>,
+
+    // we need to add trait bound "HomClassMember<RustFunctions>"
+    // because rustc maybe cannot inferred trait bound
+    type FMap<F: Hom<RustCategory> + HomClassMember<RustFunctions>> = Function<
+        impl FnOnce(Option<Dom<F, RustFunctions>>) -> Option<Cod<F, RustFunctions>>,
+        Option<Dom<F, RustFunctions>>,
+        Option<Cod<F, RustFunctions>>,
     >;
 
     fn map<A>(a: A) -> Option<A>
@@ -35,10 +39,19 @@ impl CovariantFunctor for OptionFunctor {
 
     fn fmap<F>(f: F) -> Self::FMap<F>
     where
-        F: Hom<RustCategory>,
-        Self::FMap<F>: Hom<RustCategory>,
+        F: Hom<RustCategory> 
+        + HomClassMember<RustFunctions> 
+        + Morphism<
+            Domain = <F as HomClassMember<RustFunctions>>::Domain, 
+            Codomain=<F as HomClassMember<RustFunctions>>::Codomain
+            >,
+        Self::FMap<F>: Hom<RustCategory> 
+        + HomClassMember<RustFunctions, 
+            Domain = Option<Dom<F, RustFunctions>>, 
+            Codomain = Option<Dom<F, RustFunctions>>
+            >,
     {
-        let f = move |arg: Option<Domain<F>>| -> Option<Codomain<F>> {
+        let f = move |arg: Option<Dom<F, RustFunctions>>| -> Option<Cod<F, RustFunctions>> {
             arg.map(|a| Morphism::call(f, a))
         };
         Function::new(f)

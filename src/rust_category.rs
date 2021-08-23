@@ -18,13 +18,15 @@ impl<F, I, O> HomClassMember<RustFunctions> for Function<F, I, O> where
     F: FnOnce(I) -> O // I: ClassMember<RustStructs>,
                       // O: ClassMember<RustStructs>
 {
+    type Domain = I;
+    type Codomain = O;
 }
 
 pub struct ArrayComposition {}
 
 impl<L, R> Composition<L, R> for ArrayComposition
 where
-    L: HomClassMember<RustFunctions> + Morphism<Domain = <R as Morphism>::Codomain>,
+    L: HomClassMember<RustFunctions, Domain = <R as HomClassMember<RustFunctions>>::Codomain>,
     R: HomClassMember<RustFunctions>,
 {
     type Output =
@@ -40,9 +42,15 @@ pub struct RustCategory {}
 impl const Category for RustCategory {
     type Objects = RustStructs;
     type Morphisms = RustFunctions;
+    /* 
+        if we replace Composer<L, R> trait bounds R: HomClass<RustFunction> as R: HomClass<Self::Morphisms>, 
+        raise error of below
+        the trait bound `R: axiom::HomClassMember<RustFunctions>` is not satisfied
+        the trait `axiom::HomClassMember<RustFunctions>` is not implemented for `R`
+    */
     type Composer<
-        L: HomClassMember<Self::Morphisms>,
-        R: HomClassMember<Self::Morphisms> + Morphism<Codomain = <L as Morphism>::Domain>,
+        L: HomClassMember<RustFunctions>,
+        R: HomClassMember<RustFunctions, Codomain = <L as HomClassMember<RustStructs>>::Domain >, 
     > = ArrayComposition;
 
     type Identity<Item> = Function<fn(Item) -> Item, Item, Item>;
