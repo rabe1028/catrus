@@ -36,7 +36,7 @@ impl CovariantFunctor for OptionFunctor {
     fn fmap<F>(f: F) -> Self::FMap<F>
     where
         F: Hom<RustCategory>,
-        Self::FMap<F>: Hom<RustCategory>,
+        // Self::FMap<F>: Hom<RustCategory>,
     {
         let f = move |arg: Option<Domain<F>>| -> Option<Codomain<F>> {
             arg.map(|a| Morphism::call(f, a))

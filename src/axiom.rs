@@ -21,8 +21,9 @@ pub trait HomClass: Class {
 }
 
 pub trait HomClassMember<Homs: HomClass>: Morphism
-// Domain<Self>: ClassMember<<Homs as HomClass>::Domains>,
-// Codomain<Self>: ClassMember<<Homs as HomClass>::Domains>
+where
+    Domain<Self>: ClassMember<<Homs as HomClass>::Domains>,
+    Codomain<Self>: ClassMember<<Homs as HomClass>::Domains>
 {
 }
 
@@ -42,26 +43,35 @@ pub trait Category {
     type Composer<L: HomClassMember<Self::Morphisms>, R: HomClassMember<Self::Morphisms> + Morphism<Codomain = <L as Morphism>::Domain>>: Composition<L, R>;
 
     // category must have identity morphism
-    type Identity<Item>: HomClassMember<Self::Morphisms> + Endomorphism;
+    type Identity<Item: ClassMember<Self::Objects>>: HomClassMember<Self::Morphisms> + Endomorphism + Morphism<Domain = Item>;
 
     fn identity<Item>() -> Self::Identity<Item>
     where
         Domain<Self::Identity<Item>>: ClassMember<Self::Objects>;
 }
 
-pub trait Ob<Cat: Category> : ClassMember<<Cat as Category>::Objects> {}
-impl <A, Cat> Ob<Cat> for A
+pub trait Ob<Cat: Category>: ClassMember<<Cat as Category>::Objects> {}
+impl<A, Cat> Ob<Cat> for A
 where
     A: ClassMember<<Cat as Category>::Objects>,
     Cat: Category,
-    {}
+{
+}
 
-pub trait Hom<Cat: Category>: HomClassMember<<Cat as Category>::Morphisms> {}
-impl <A, Cat> Hom<Cat> for A
+pub trait Hom<Cat: Category>: 
+where
+    Self: HomClassMember<<Cat as Category>::Morphisms>,
+    Domain<Self>: ClassMember<<Cat as Category>::Objects>,
+    Codomain<Self>: ClassMember<<Cat as Category>::Objects>,
+{}
+impl<A, Cat> Hom<Cat> for A
 where
     A: HomClassMember<<Cat as Category>::Morphisms>,
+    Domain<A>: ClassMember<<Cat as Category>::Objects>,
+    Codomain<A>: ClassMember<<Cat as Category>::Objects>,
     Cat: Category,
-    {}
+{
+}
 
 pub trait CovariantFunctor {
     type Source: Category;
@@ -70,20 +80,28 @@ pub trait CovariantFunctor {
     where
         A: Ob<Self::Source>;
 
-    type FMap<F>
-    : // Hom<Self::Target>
+    type FMap<F>: Hom<Self::Target>
     where
-        F: Hom<Self::Source>;
+        F: Hom<Self::Source>,
+        Domain<Self::FMap<F>>: ClassMember<<Self::Target as Category>::Objects>,
+        Codomain<Self::FMap<F>>: ClassMember<<Self::Target as Category>::Objects>,
+        ;
 
     fn map<A>(a: A) -> Self::Map<A>
     where
         A: Ob<Self::Source>,
-        Self::Map<A>: Ob<Self::Target>;
+        // Self::Map<A>: Ob<Self::Target>
+        ;
 
     fn fmap<F>(f: F) -> Self::FMap<F>
     where
-        F: Hom<Self::Source>
+        F: Hom<Self::Source>,
+        Domain<F>: ClassMember<<Self::Source as Category>::Objects>,
+        Codomain<F>: ClassMember<<Self::Source as Category>::Objects>,
+        Domain<Self::FMap<F>>: ClassMember<<Self::Target as Category>::Objects>,
+        Codomain<Self::FMap<F>>: ClassMember<<Self::Target as Category>::Objects>,
         // Self::FMap<F>: Hom<Self::Target>
+        // cannot uncommented this line because rustc can't resolve F trait bounds in implement
     ;
 }
 
