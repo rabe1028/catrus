@@ -48,7 +48,7 @@ impl CovariantFunctor for OptionFunctor {
         Self::FMap<F>: Hom<RustCategory> 
         + HomClassMember<RustFunctions, 
             Domain = Option<Dom<F, RustFunctions>>, 
-            Codomain = Option<Dom<F, RustFunctions>>
+            Codomain = Option<Cod<F, RustFunctions>>
             >,
     {
         let f = move |arg: Option<Dom<F, RustFunctions>>| -> Option<Cod<F, RustFunctions>> {

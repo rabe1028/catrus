@@ -50,7 +50,7 @@ impl const Category for RustCategory {
     */
     type Composer<
         L: HomClassMember<RustFunctions>,
-        R: HomClassMember<RustFunctions, Codomain = <L as HomClassMember<RustStructs>>::Domain >, 
+        R: HomClassMember<RustFunctions, Codomain = <L as HomClassMember<RustFunctions>>::Domain >, 
     > = ArrayComposition;
 
     type Identity<Item> = Function<fn(Item) -> Item, Item, Item>;
