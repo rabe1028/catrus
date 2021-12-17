@@ -21,8 +21,9 @@ pub trait HomClass: Class {
 }
 
 pub trait HomClassMember<Homs: HomClass>: Morphism
-// Domain<Self>: ClassMember<<Homs as HomClass>::Domains>,
-// Codomain<Self>: ClassMember<<Homs as HomClass>::Domains>
+// where
+//     Domain<Self>: ClassMember<<Homs as HomClass>::Domains>,
+//     Codomain<Self>: ClassMember<<Homs as HomClass>::Domains>
 {
 }
 
