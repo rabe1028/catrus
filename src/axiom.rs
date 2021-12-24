@@ -72,7 +72,7 @@ pub trait CovariantFunctor {
         A: Ob<Self::Source>;
 
     type FMap<F>
-    : // Hom<Self::Target>
+    : Hom<Self::Target>
     where
         F: Hom<Self::Source>;
 
@@ -83,9 +83,7 @@ pub trait CovariantFunctor {
 
     fn fmap<F>(f: F) -> Self::FMap<F>
     where
-        F: Hom<Self::Source>
-        // Self::FMap<F>: Hom<Self::Target>
-    ;
+        F: Hom<Self::Source>;
 }
 
 pub trait EndoFunctor: CovariantFunctor<Source = <Self as CovariantFunctor>::Target> {}

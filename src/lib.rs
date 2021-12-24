@@ -13,6 +13,12 @@ use wrapper::*;
 pub mod rust_category;
 use rust_category::*;
 
+#[cfg(test)]
+extern crate quickcheck;
+#[cfg(test)]
+#[macro_use(quickcheck)]
+extern crate quickcheck_macros;
+
 struct OptionFunctor {}
 
 impl CovariantFunctor for OptionFunctor {
@@ -42,5 +48,24 @@ impl CovariantFunctor for OptionFunctor {
             arg.map(|a| Morphism::call(f, a))
         };
         Function::new(f)
+    }
+}
+
+#[cfg(test)] 
+mod tests {
+    use crate::*;
+
+    #[test]
+    fn test_map() {
+        let a = OptionFunctor::map(1u32);
+        let mapfn = OptionFunctor::fmap(Function::new(|a| a + 4));
+        assert_eq!(Some(5), mapfn.call(a));
+    }
+
+    #[quickcheck]
+    fn functor_raw_identity(x: u32) -> bool {
+        let id = <<OptionFunctor as CovariantFunctor>::Source as Category>::identity::<_>();
+        let mapid = OptionFunctor::fmap(id.clone());
+        OptionFunctor::map(id.call(x)) == mapid.call(OptionFunctor::map(x))
     }
 }

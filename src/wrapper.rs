@@ -1,5 +1,6 @@
 use crate::axiom::*;
 
+#[derive(Clone)]
 pub struct Function<F, I, O>
 where
     F: FnOnce(I) -> O,
